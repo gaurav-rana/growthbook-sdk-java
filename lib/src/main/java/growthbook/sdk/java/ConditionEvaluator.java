@@ -32,14 +32,17 @@ class ConditionEvaluator implements IConditionEvaluator {
      * @param attributesJsonString A JSON string of the user attributes to evaluate
      * @param conditionJsonString  A JSON string of the condition
      * @return Whether the condition should be true for the user
+     * Todo:// attributesJsonString and conditionJsonString can be JsonElement instead of string.
      */
     @Override
     public Boolean evaluateCondition(String attributesJsonString, String conditionJsonString) {
         try {
             JsonElement attributesJson = jsonUtils.gson.fromJson(attributesJsonString, JsonElement.class);
+            // condition json needs to be abstracted out and put in the cache to avoid parsing it every time
             JsonObject conditionJson = jsonUtils.gson.fromJson(conditionJsonString, JsonObject.class);
 
             if (conditionJson.has("$or")) {
+                // This should be created as part of the cache
                 JsonArray targetItems = conditionJson.get("$or").getAsJsonArray();
                 return evalOr(attributesJson, targetItems);
             }
@@ -214,6 +217,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     String value = actual.getAsString();
                     Type listType = new TypeToken<ArrayList<String>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<String> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return conditionsList.contains(value);
                 }
@@ -222,6 +226,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     Float value = actual.getAsFloat();
                     Type listType = new TypeToken<ArrayList<Float>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<Float> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return conditionsList.contains(value);
                 }
@@ -252,6 +257,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     String value = actual.getAsString();
                     Type listType = new TypeToken<ArrayList<String>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<String> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return !conditionsList.contains(value);
                 }
@@ -260,6 +266,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     Float value = actual.getAsFloat();
                     Type listType = new TypeToken<ArrayList<Float>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<Float> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return !conditionsList.contains(value);
                 }
@@ -268,6 +275,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     Boolean value = actual.getAsBoolean();
                     Type listType = new TypeToken<ArrayList<Boolean>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<Boolean> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return !conditionsList.contains(value);
                 }
