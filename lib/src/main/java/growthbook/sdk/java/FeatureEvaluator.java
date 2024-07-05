@@ -114,6 +114,7 @@ class FeatureEvaluator implements IFeatureEvaluator {
                 return defaultValueFeature;
             }
 
+            //can we save this to some cache? and retrieve for subsequent invocations.
             Feature<ValueType> feature = jsonUtils.gson.fromJson(featureJson, Feature.class);
             if (feature == null) {
                 // When key exists but there is no value, should be default value with null value
@@ -125,6 +126,7 @@ class FeatureEvaluator implements IFeatureEvaluator {
 
             // If empty rule set, use the default value
             if (feature.getRules() == null || feature.getRules().isEmpty()) {
+                // can be part of the same cache above????
                 ValueType value = (ValueType) GrowthBookJsonUtils.unwrap(feature.getDefaultValue());
                 FeatureResult<ValueType> defaultValueFeatureForRules = FeatureResult
                         .<ValueType>builder()
@@ -224,8 +226,9 @@ class FeatureEvaluator implements IFeatureEvaluator {
 
                     // If the rule has a condition, and it evaluates to false, skip this rule and continue to the next one
                     if (rule.getCondition() != null) {
-                        if (!conditionEvaluator.evaluateCondition(attributesJson, rule.getCondition().toString())) {
-
+                        // This needs to move away from string, string to Object, Object
+                        //Todo: test if this is the right way to do it
+                        if (!conditionEvaluator.evaluateCondition(attributes, rule.getCondition().getAsJsonObject())) {
                             // Skip rule because of condition
                             continue;
                         }

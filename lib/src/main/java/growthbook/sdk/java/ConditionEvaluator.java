@@ -32,66 +32,16 @@ class ConditionEvaluator implements IConditionEvaluator {
      * @param attributesJsonString A JSON string of the user attributes to evaluate
      * @param conditionJsonString  A JSON string of the condition
      * @return Whether the condition should be true for the user
+     * Todo:// attributesJsonString and conditionJsonString can be JsonElement instead of string.
      */
     @Override
     public Boolean evaluateCondition(String attributesJsonString, String conditionJsonString) {
         try {
             JsonElement attributesJson = jsonUtils.gson.fromJson(attributesJsonString, JsonElement.class);
+            // condition json needs to be abstracted out and put in the cache to avoid parsing it every time
             JsonObject conditionJson = jsonUtils.gson.fromJson(conditionJsonString, JsonObject.class);
+            return evaluateCondition(attributesJson, conditionJson);
 
-            // Loop through the conditionObj key/value pairs
-            for (Map.Entry<String, JsonElement> entry : conditionJson.entrySet()) {
-                String key = entry.getKey();
-                JsonElement value = entry.getValue();
-
-                switch (key) {
-                    case "$or":
-                        // If conditionObj has a key $or, return evalOr(attributes, condition["$or"])
-                        JsonArray orTargetItems = value.getAsJsonArray();
-                        if (orTargetItems != null) {
-                            if (!evalOr(attributesJson, orTargetItems)) {
-                                return false;
-                            }
-                        }
-                        break;
-                    case "$nor":
-                        // If conditionObj has a key $nor, return !evalOr(attributes, condition["$nor"])
-                        JsonArray norTargetItems = value.getAsJsonArray();
-                        if (norTargetItems != null) {
-                            if (evalOr(attributesJson, norTargetItems)) {
-                                return false;
-                            }
-                        }
-                        break;
-                    case "$and":
-                        // If conditionObj has a key $and, return !evalAnd(attributes, condition["$and"])
-                        JsonArray andTargetItems = value.getAsJsonArray();
-                        if (andTargetItems != null) {
-                            if (!evalAnd(attributesJson, andTargetItems)) {
-                                return false;
-                            }
-                        }
-                        break;
-                    case "$not":
-                        // If conditionObj has a key $not, return !evalCondition(attributes, condition["$not"])
-                        if (value != null) {
-                            if (evaluateCondition(attributesJsonString, value.toString())) {
-                                return false;
-                            }
-                        }
-                        break;
-                    default:
-                        JsonElement element = (JsonElement) getPath(attributesJson, key);
-                        // If evalConditionValue(value, getPath(attributes, key)) is false,
-                        // break out of loop and return false
-                        if (!evalConditionValue(value, element)) {
-                            return false;
-                        }
-                        break;
-                }
-            }
-            // If none of the entries failed their checks, `evalCondition` returns true
-            return true;
         } catch (com.google.gson.JsonSyntaxException jsonSyntaxException) {
             log.error(jsonSyntaxException.getMessage(), jsonSyntaxException);
             return false;
@@ -102,6 +52,64 @@ class ConditionEvaluator implements IConditionEvaluator {
             log.error(exception.getMessage(), exception);
             return false;
         }
+    }
+
+    public Boolean evaluateCondition(JsonElement attributesJson, JsonObject conditionJson) {
+        // Loop through the conditionObj key/value pairs
+        for (Map.Entry<String, JsonElement> entry : conditionJson.entrySet()) {
+            String key = entry.getKey();
+            JsonElement value = entry.getValue();
+
+            switch (key) {
+                case "$or":
+                    // If conditionObj has a key $or, return evalOr(attributes, condition["$or"])
+                    // This should be created as part of the cache
+                    JsonArray orTargetItems = value.getAsJsonArray();
+                    if (orTargetItems != null) {
+                        if (!evalOr(attributesJson, orTargetItems)) {
+                            return false;
+                        }
+                    }
+                    break;
+                case "$nor":
+                    // If conditionObj has a key $nor, return !evalOr(attributes, condition["$nor"])
+                    JsonArray norTargetItems = value.getAsJsonArray();
+                    if (norTargetItems != null) {
+                        if (evalOr(attributesJson, norTargetItems)) {
+                            return false;
+                        }
+                    }
+                    break;
+                case "$and":
+                    // If conditionObj has a key $and, return !evalAnd(attributes, condition["$and"])
+                    JsonArray andTargetItems = value.getAsJsonArray();
+                    if (andTargetItems != null) {
+                        if (!evalAnd(attributesJson, andTargetItems)) {
+                            return false;
+                        }
+                    }
+                    break;
+                case "$not":
+                    // If conditionObj has a key $not, return !evalCondition(attributes, condition["$not"])
+                    if (value != null) {
+                        //todo: check if this is the right way to do it (value.getAsJsonObject)
+                        if (evaluateCondition(attributesJson, value.getAsJsonObject())) {
+                            return false;
+                        }
+                    }
+                    break;
+                default:
+                    JsonElement element = (JsonElement) getPath(attributesJson, key);
+                    // If evalConditionValue(value, getPath(attributes, key)) is false,
+                    // break out of loop and return false
+                    if (!evalConditionValue(value, element)) {
+                        return false;
+                    }
+                    break;
+            }
+        }
+        // If none of the entries failed their checks, `evalCondition` returns true
+        return true;
     }
 
     /**
@@ -242,6 +250,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     String value = actual.getAsString();
                     Type listType = new TypeToken<ArrayList<String>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<String> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return conditionsList.contains(value);
                 }
@@ -250,6 +259,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     Float value = actual.getAsFloat();
                     Type listType = new TypeToken<ArrayList<Float>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<Float> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return conditionsList.contains(value);
                 }
@@ -280,6 +290,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     String value = actual.getAsString();
                     Type listType = new TypeToken<ArrayList<String>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<String> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return !conditionsList.contains(value);
                 }
@@ -288,6 +299,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     Float value = actual.getAsFloat();
                     Type listType = new TypeToken<ArrayList<Float>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<Float> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return !conditionsList.contains(value);
                 }
@@ -296,6 +308,7 @@ class ConditionEvaluator implements IConditionEvaluator {
                     Boolean value = actual.getAsBoolean();
                     Type listType = new TypeToken<ArrayList<Boolean>>() {
                     }.getType();
+                    //can be preset while building the features.
                     ArrayList<Boolean> conditionsList = jsonUtils.gson.fromJson(expected, listType);
                     return !conditionsList.contains(value);
                 }
