@@ -227,8 +227,8 @@ class FeatureEvaluator implements IFeatureEvaluator {
                     // If the rule has a condition, and it evaluates to false, skip this rule and continue to the next one
                     if (rule.getCondition() != null) {
                         // This needs to move away from string, string to Object, Object
-                        if (!conditionEvaluator.evaluateCondition(attributesJson, rule.getCondition().toString())) {
-
+                        //Todo: test if this is the right way to do it
+                        if (!conditionEvaluator.evaluateCondition(attributes, rule.getCondition().getAsJsonObject())) {
                             // Skip rule because of condition
                             continue;
                         }
