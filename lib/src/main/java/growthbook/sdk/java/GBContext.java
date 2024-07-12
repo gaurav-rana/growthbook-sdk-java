@@ -224,7 +224,7 @@ public class GBContext {
         public GBContext build() {
             GBContext context = super.build();
             context.setAttributesJson(context.attributesJson);
-
+            context.setAttributes(context.attributes);
             return context;
         }
     }
