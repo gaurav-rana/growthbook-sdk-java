@@ -112,7 +112,14 @@ class FeatureEvaluator implements IFeatureEvaluator {
                 return defaultValueFeature;
             }
 
-            Feature<ValueType> feature = jsonUtils.gson.fromJson(featureJson, Feature.class);
+            Feature<ValueType> feature = context.getCache() != null ? context.getCache().getFeature(key, valueTypeClass) : null;
+            if (feature == null) {
+                feature = jsonUtils.gson.fromJson(featureJson, Feature.class);
+                if (context.getCache() != null) {
+                    context.getCache().setFeature(key, feature);
+                }
+            }
+
             if (feature == null) {
                 // When key exists but there is no value, should be default value with null value
                 if (featureUsageCallback != null) {

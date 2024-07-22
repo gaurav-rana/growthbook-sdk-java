@@ -43,6 +43,7 @@ public class GBContext {
      * @param stickyBucketService              Service that provide functionality of Sticky Bucketing.
      * @param stickyBucketAssignmentDocs       Map of Sticky Bucket documents.
      * @param stickyBucketIdentifierAttributes List of user's attributes keys.
+     * @param cache                            Cache object to store the features, reset the cache on featureJson update.
      */
     @Builder
     public GBContext(
@@ -60,7 +61,8 @@ public class GBContext {
             @Nullable FeatureUsageCallback featureUsageCallback,
             @Nullable StickyBucketService stickyBucketService,
             @Nullable Map<String, StickyAssignmentsDocument> stickyBucketAssignmentDocs,
-            @Nullable List<String> stickyBucketIdentifierAttributes
+            @Nullable List<String> stickyBucketIdentifierAttributes,
+            @Nullable GBCache cache
     ) {
         this.encryptionKey = encryptionKey;
         this.attributesJson = attributesJson == null ? "{}" : attributesJson;
@@ -83,6 +85,7 @@ public class GBContext {
         this.stickyBucketService = stickyBucketService;
         this.stickyBucketAssignmentDocs = stickyBucketAssignmentDocs;
         this.stickyBucketIdentifierAttributes = stickyBucketIdentifierAttributes;
+        this.cache = cache;
     }
 
     /**
@@ -203,6 +206,12 @@ public class GBContext {
      */
     @Nullable
     private List<String> stickyBucketIdentifierAttributes;
+
+    /**
+     * Cache object to store the features, reset the cache on featureJson update.
+     */
+    @Nullable
+    private GBCache cache;
 
     /**
      * The builder class to help create a context. You can use {@link #builder()} or the {@link GBContext} constructor
